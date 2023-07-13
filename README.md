@@ -3,7 +3,7 @@
 
 ## Background
 
-Spot, the Boston Dynamics (BD) robot dog, equipped with a laser scanner mounted on top, records a walk inside and back out an indoor environment.
+Spot, the Boston Dynamics (BD) robot dog, equipped with a laser scanner mounted on top, records a walk inside and back out of an indoor environment.
 
 <img src="spot.png"  width="50%" height="30%">
 
@@ -14,7 +14,12 @@ The engineers of BD insist on using a low quality laser scanner which only retur
 
 $$
 \begin{aligned}
-LS_{i}=\{r^0,r^1,..., r^{15} \}_i, \>\>\>\>Pose_i=\{x, y, \psi\}_i
+LS_{i}=\{r^0,r^1,..., r^{15} \}_i
+\end{aligned}
+$$
+$$
+\begin{aligned}
+Pose_i=\{x, y, \psi\}_i
 \end{aligned}
 $$
 
@@ -24,7 +29,7 @@ $$
 
 Applying a mapping algorithm that processes these measurements yields the following online mapping clip:
 
-<img src="zvuv_indoor_mapping.gif"  width="50%" height="30%">
+<img src="indoor_mapping.gif"  width="50%" height="30%">
 
 
 
@@ -73,7 +78,9 @@ The BD engineers want to create a classifier. A classifier that takes as inputs 
 
    For example:
    $$
-   \begin{aligned}Class(r^0_i,r^1_i,..., r^{15}_i)==Class(r^1_i,..., r^{15}_i,r^0_i)\end{aligned}
+   \begin{aligned}
+   Class(r^0_i,r^1_i,..., r^{15}_i)==Class(r^1_i,..., r^{15}_i,r^0_i)
+   \end{aligned}
    $$
 
 2. The occurrences of each class should distribute as even as possible ($1/3, 1/3, 1/3$) over a recording. 
@@ -90,5 +97,5 @@ Here the color of the position marker (poses) represents the classification
 
 ### Objective: WIP
 
-Your job is to come up with the classifier and explain your approach.
+Your job is to come up with the classifier and explain your approach. Follow the instructions in the Jupyter-Notebook.
 
