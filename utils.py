@@ -280,6 +280,102 @@ def sceneIsFar(ranges):
 # plt.plot(xx, 1-(sgmd_2(xx-4)+sgmd_2(-4-xx)))
 # plt.show()
 
+sgmd_close = get_sigmoid(percent_loc=0.2,percent_val=0.9)
+
+
+def get_features(ranges, pc_x_r, pc_y_r):
+    
+    # shift measurements:
+    sig_1_mat = np.roll(ranges, -1, axis=1)
+    sig_2_mat = np.roll(ranges, 1, axis=1)
+    sig_3_mat = np.roll(ranges, -2, axis=1)
+    sig_4_mat = np.roll(ranges, 3, axis=1)
+    sig_7_mat = np.roll(ranges, 8, axis=1)
+
+    # calculate median 3 and 5:
+    rs_med3_mat = np.median(np.concatenate((np.expand_dims(ranges,axis=2), np.expand_dims(sig_1_mat,axis=2), np.expand_dims(sig_2_mat,axis=2)), axis=2), axis=2)
+
+    rs_med5_mat = np.median(np.concatenate((np.expand_dims(ranges,axis=2),
+                                        np.expand_dims(sig_1_mat,axis=2),
+                                        np.expand_dims(sig_2_mat,axis=2),
+                                        np.expand_dims(sig_3_mat,axis=2),
+                                        np.expand_dims(sig_4_mat,axis=2)),
+                                        axis=2), axis=2)
+    
+    pc_x_r_matRoll1 = np.roll(pc_x_r, 1, axis=0)
+    pc_x_r_matRolln1 = np.roll(pc_x_r, -1, axis=0)
+    pc_y_r_matRoll1 = np.roll(pc_y_r, 1, axis=0)
+    pc_y_r_matRolln1 = np.roll(pc_y_r, -1, axis=0)
+
+    feature_2_mat =np.sum(0.5+0.5*np.tanh(4*np.multiply(np.abs(pc_x_r_matRoll1*0.5+pc_x_r_matRolln1*0.5-pc_x_r),(ranges.T<2.0))+np.multiply(np.abs(pc_y_r_matRoll1*0.5+pc_y_r_matRolln1*0.5-pc_y_r),(ranges.T<2.0))-0.3), axis=0).T
+
+    # feature_1_mat = np.sum(np.abs(ranges-rs_med3_mat)>1.0, axis=1)
+    simple_calc = False
+    if simple_calc:
+        sig_7 = 0.5*(sig_7_mat+ranges<1.2)+0.5*(sig_7_mat+ranges<0.9)
+        feature_7_mat = np.sum(sig_7, axis=1)
+    else:
+        sig_7 = sgmd_close(1.0-(sig_7_mat+ranges))
+        feature_7_mat = np.sum(sig_7, axis=1)
+
+    sig_7 = sgmd_close(1.0-(sig_7_mat+ranges))
+    feature_7_mat = np.sum(sig_7, axis=1)
+
+    sig_8 = sgmd_close(2.0-(sig_7_mat+ranges))-sig_7
+    feature_8_mat = np.sum(sig_8, axis=1)
+
+    sig_9 = sgmd_close(3.0-(sig_7_mat+ranges))-sig_8
+    feature_9_mat = np.sum(sig_9, axis=1)
+
+    sig_10 = sgmd_close(4.0-(sig_7_mat+ranges))-sig_9
+    feature_10_mat = np.sum(sig_10, axis=1)
+
+    sig_11 = sgmd_close(5.0-(sig_7_mat+ranges))-sig_10
+    feature_11_mat = np.sum(sig_11, axis=1)
+
+
+    feature_6_mat = np.sum(0.4*(np.abs(ranges-rs_med5_mat)>1.7)+0.3*(np.abs(ranges-rs_med5_mat)>1.2)+0.3*(np.abs(ranges-rs_med5_mat)>0.5), axis=1)
+    feature_3_mat = np.sum(np.logical_and(np.array(ranges<2.0,dtype=float), np.array(np.abs(0.5*sig_1_mat+0.5*sig_2_mat-ranges)<0.3,dtype=float)), axis=1)
+    feature_1_mat = np.sum(np.logical_and(np.array(ranges<2.0,dtype=float), np.array(np.abs(0.25*sig_3_mat+0.25*sig_4_mat+0.25*sig_1_mat+0.25*sig_2_mat-ranges)<0.3,dtype=float)), axis=1)
+
+    if True:
+        feature_4_mat = np.array(rs_med3_mat>3.0, dtype=float)
+        feature_4_mat = np.sum(feature_4_mat-np.roll(feature_4_mat, 1, axis=1)>0, axis=1)
+    else:
+        sgmd_close4 = get_sigmoid(percent_loc=0.7,percent_val=0.9)
+        fm4_ = sgmd_close4(rs_med3_mat-3.0)
+        feature_4_mat = np.sum(sgmd_close4(fm4_-np.roll(fm4_, 1, axis=1)-0.98), axis=1)
+
+
+    feature_5_mat = np.array(rs_med5_mat>3.0, dtype=float)
+    feature_5_mat = np.sum(feature_5_mat-np.roll(feature_5_mat, 1, axis=1)>0, axis=1)
+    d1 = feature_4_mat*0.5+0.5*feature_5_mat
+    d2 = feature_2_mat
+    d3 = feature_1_mat
+
+    fw, fw_count = calc_lin_char(pc_x_r, pc_y_r, ranges, th=0.2)
+    feature_12_mat, feature_13_mat = fw, fw_count
+
+    discriptor = np.concatenate((   np.expand_dims(d1,axis=1),
+                                    np.expand_dims(d2,axis=1), 
+                                    np.expand_dims(d3,axis=1), 
+                                    np.expand_dims(feature_3_mat,axis=1),
+                                    np.expand_dims(feature_6_mat,axis=1),
+                                    np.expand_dims(feature_7_mat,axis=1),
+                                    np.expand_dims(feature_8_mat,axis=1),
+                                    np.expand_dims(feature_9_mat,axis=1),
+                                    np.expand_dims(feature_10_mat,axis=1),
+                                    np.expand_dims(feature_11_mat,axis=1),
+                                    np.expand_dims(feature_12_mat,axis=1),
+                                    np.expand_dims(feature_13_mat,axis=1)), axis=1)
+
+    return (feature_1_mat, feature_2_mat, feature_3_mat, feature_4_mat, feature_5_mat, feature_6_mat), discriptor
+
+def get_features_from_ranges(ranges):
+    pc_x, pc_y, _, _ = ls2localPC(ranges)
+    _, descriptor = get_features(ranges, pc_x, pc_y)
+    return descriptor
+
 
 
 if __name__=="__main__":
